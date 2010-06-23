@@ -42,6 +42,7 @@ module EchoServer
       when "quit" then @user.logout
       when "rename" then @user.room_name(content.join(" ")); @user.look
       when "redescribe" then @user.room_description(content.join(" ")); @user.look
+      when "save" then @user.look
       else @user.send_message("huh?\n")
     end
     
