@@ -11,7 +11,7 @@ $connections = []
 $main_hall = Room.new("The Main Hall", "The starting point of your adventure", {:east => Room.new("Easter"), :west => Room.new("Wester")})
 
 
-module EchoServer
+module Server
   def post_init
     #timer = EventMachine::PeriodicTimer.new(2) {send_data "10 second update."}
     $connections << self
@@ -40,20 +40,35 @@ module EchoServer
     content = data.strip.split(" ")[1..-1]
     case command
       when "say" then @user.say(content.join(" "))
+      when "yell" then @user.yell(content.join(" "))
+      when "tell" then @user.tell(content.first, content[1..-1].join(" "))  
       when "look" then @user.look
       when "go" then @user.move(content.first); @user.look
-      when "tell" then @user.tell(content.first, content[1..-1].join(" "))
-      when "quit" then @user.logout
+      when ("quit"||"exit") then @user.logout
       when "rename" then @user.room_name(content.join(" ")); @user.look
       when "redescribe" then @user.room_description(content.join(" ")); @user.look
-      when "save" then save_game(content.join(" ")); @user.send_message("Game Saved.\n")
+      when "save" then save_game(content.join(" "))
+      when "open" then load_game(content.join(" "))
       else @user.send_message("huh?\n")
     end
   end
   
-  def save_game(name)
-    name = Time.now.strftime("%d%b%y")
-    game = Game.new
-    save = File.open("saves/#{game.name} #{name}.save", 'w') {|file| Marshal.dump(game, file)}
+  def save_game(name = nil)
+    name ||= Time.now.strftime("%d%b%y")
+    File.open("saves/#{$game.name} #{name}.save", 'w') {|file| Marshal.dump($game.dup, file)}
+    @user.send_message("Game Saved.\n")
+  end
+  
+  def load_game(name = nil)
+    name ||= Time.now.strftime("%d%b%y")
+    File.open("saves/#{$game.name} #{name}.save", 'r') {|file| $game = Marshal.load(file.read)}
+    $rooms = $game.rooms
+    $users = $game.users
+    @user.send_message("Game Loaded. Please log out and back in.\n")
   end
 end
+
+EventMachine::run {
+  EventMachine::start_server "127.0.0.1", 8081, Server
+  puts 'Running Server on 8081'
+}

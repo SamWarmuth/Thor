@@ -40,7 +40,11 @@ class User < Living
   end
   
   def say(message)
-    $users.each {|user| user.send_message("#{@name} says: #{message} from #{@location}\n")}
+    $users.find_all{|u| u.location == @location}.each{|user| user.send_message("#{@name} says: #{message}\n")}
+  end
+  
+  def yell(message)
+    $users.each {|user| user.send_message("#{@name} yells: #{message} from #{@location}\n")}
   end
   
   def tell(user, message)
@@ -67,6 +71,15 @@ class User < Living
   
   def room_name; return false; end
   def room_description; return false; end
+  
+  def dup
+    new_user = User.new(@name)
+    new_user.name = @name
+    new_user.pass_hash = @pass_hash
+    new_user.class = @class
+    new_user.location = @location
+    return new_user
+  end
   
   def to_s
     @name
