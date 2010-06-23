@@ -67,8 +67,3 @@ module Server
     @user.send_message("Game Loaded. Please log out and back in.\n")
   end
 end
-
-EventMachine::run {
-  EventMachine::start_server "127.0.0.1", 8081, Server
-  puts 'Running Server on 8081'
-}
