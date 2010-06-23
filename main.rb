@@ -7,41 +7,39 @@ $main_hall = Room.new("The Main Hall", "The starting point of your adventure", {
 $users = []
 $connections = []
 
-
 module EchoServer
   def post_init
-    #timer = EventMachine::PeriodicTimer.new(2) do
-    #   send_data "2 seconds!"
-    #end
+    #timer = EventMachine::PeriodicTimer.new(2) {send_data "10 second update."}
     $connections << self
     send_data "Please enter your username: "
   end
 
-  def receive_data data
+  def receive_data(data)
     # The first message from the user is their username
     if @user.nil?
-      if data.strip[0] = "$"
+      if data.strip[0] == "$"
+        send_data "new superuser #{data.strip[1..-1]}\n"
         @user = SuperUser.new(data.strip[1..-1])
+        @user.connection = self
       else
+        send_data "new user #{data.strip}\n"
         @user = User.new(data.strip)
+        @user.connection = self
       end
-      @user.location = $main_hall
+      @user.move_to($main_hall)
       $users << @user
-      send_data @user.look
-      return
+      return @user.look
     end
     
     command = data.strip.split(" ").first
-    modifiers = data.strip.split(" ")[1..-1]
-    case data.strip.split(" ").first
-      when "say" then $connections.each {|client| client.send_data @user.say(modifiers.join(" "))}
-      when "look" then send_data @user.look
-      when "go" then 
-        send_data @user.move(modifiers.first)
-        send_data @user.look
-      when "debug"
-        
-      else send_data "huh?\n"
+    content = data.strip.split(" ")[1..-1]
+    case command
+      when "say" then @user.say(content.join(" "))
+      when "look" then @user.look
+      when "go" then @user.move(content.first); @user.look
+      when "tell" then @user.tell(content.first, content[1..-1].join(" "))
+      when "quit" then @user.logout
+      else @user.send_message("huh?\n")
     end
   end
 end
