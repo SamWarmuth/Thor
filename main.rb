@@ -39,6 +39,8 @@ module EchoServer
       when "go" then @user.move(content.first); @user.look
       when "tell" then @user.tell(content.first, content[1..-1].join(" "))
       when "quit" then @user.logout
+      when "rename" then @user.room_name(content.join(" ")); @user.look
+      when "redescribe" then @user.room_description(content.join(" ")); @user.look
       else @user.send_message("huh?\n")
     end
   end

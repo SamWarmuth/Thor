@@ -57,11 +57,14 @@ class User < Living
   
   def logout
     unless @connection.nil?
-      send_message("Seeya!")
       @connection.close_connection
-      @user.connection = nil
+      @connection = nil
+      $users.each {|user| user.send_message("#{@username} Logged Out.\n")}
     end
   end
+  
+  def room_name; return false; end
+  def room_description; return false; end
   
   def to_s
     @username
@@ -77,6 +80,21 @@ class SuperUser < User
     end
     super
   end
+  
+  def room_name(new_name)
+    @location.name = new_name
+    send_message("Renamed current room to '#{new_name}'.\n")
+    
+  end
+  
+  def room_description(new_description)
+    @location.description = new_description
+    
+    send_message("Change description of current room to '#{new_description}'.\n")
+    
+  end
+  
+  
 end
 
 
