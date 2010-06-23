@@ -4,11 +4,9 @@ require 'lib'
 require 'living'
 require 'room'
 $game = Game.new("Master")
-$rooms = $game.rooms
-$users = $game.users
-$connections = []
+$game.home = Room.new($game, "The Main Hall", "The starting point of your adventure", {:east => Room.new($game, "Easter"), :west => Room.new($game, "Wester")})
 
-$main_hall = Room.new("The Main Hall", "The starting point of your adventure", {:east => Room.new("Easter"), :west => Room.new("Wester")})
+$connections = []
 
 
 module Server
@@ -24,14 +22,15 @@ module Server
       if data.strip[0] == "$"
         send_data "new superuser #{data.strip[1..-1]}\n"
         @user = SuperUser.new(data.strip[1..-1])
-        @user.connection = self
       else
         send_data "new user #{data.strip}\n"
         @user = User.new(data.strip)
-        @user.connection = self
       end
-      @user.move_to($main_hall)
-      $users << @user
+      
+      @user.connection = self
+      @user.game = $game
+      @user.move_to($game.home)
+      $game.users << @user
       @user.look
       return
     end
@@ -44,26 +43,29 @@ module Server
       when "tell" then @user.tell(content.first, content[1..-1].join(" "))  
       when "look" then @user.look
       when "go" then @user.move(content.first); @user.look
-      when ("quit"||"exit") then @user.logout
+      when "quit" then @user.logout
+      when "exit" then @user.logout 
       when "rename" then @user.room_name(content.join(" ")); @user.look
       when "redescribe" then @user.room_description(content.join(" ")); @user.look
       when "save" then save_game(content.join(" "))
-      when "open" then load_game(content.join(" "))
+      when "load" then load_game(content.join(" "))
       else @user.send_message("huh?\n")
     end
   end
   
   def save_game(name = nil)
     name ||= Time.now.strftime("%d%b%y")
-    File.open("saves/#{$game.name} #{name}.save", 'w') {|file| Marshal.dump($game.dup, file)}
+    File.open("saves/#{@user.game.name} #{name}.save", 'w') {|file| Marshal.dump(@user.game.dup, file)}
     @user.send_message("Game Saved.\n")
   end
   
   def load_game(name = nil)
     name ||= Time.now.strftime("%d%b%y")
-    File.open("saves/#{$game.name} #{name}.save", 'r') {|file| $game = Marshal.load(file.read)}
-    $rooms = $game.rooms
-    $users = $game.users
-    @user.send_message("Game Loaded. Please log out and back in.\n")
+    File.open("saves/#{@user.game.name} #{name}.save", 'r') {|file| @user.game.dup = Marshal.load(file.read)}
+    $connections = []
+    @user.logout
+    
   end
 end
+
+

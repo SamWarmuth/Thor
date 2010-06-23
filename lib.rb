@@ -1,5 +1,5 @@
 class Game
-  attr_accessor :name,:rooms, :users, :npcs, :objects
+  attr_accessor :name,:rooms, :users, :npcs, :objects, :home
   
   def initialize(name = "New Game")
     @name = name
