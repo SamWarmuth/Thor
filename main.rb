@@ -3,9 +3,7 @@ require 'eventmachine'
 require 'living'
 require 'room'
 
-$main_hall = Room.new
-$main_hall.name = "Main Hall"
-$main_hall.exits = [Room.new, Room.new]
+$main_hall = Room.new("The Main Hall", "The starting point of your adventure", {:east => Room.new("Easter"), :west => Room.new("Wester")})
 $users = []
 $connections = []
 
@@ -20,23 +18,31 @@ module EchoServer
   end
 
   def receive_data data
-    # The first message from the user is its name
+    # The first message from the user is their username
     if @user.nil?
-      @user = User.new
-      @user.username = data.strip
+      if data.strip[0] = "$"
+        @user = SuperUser.new(data.strip[1..-1])
+      else
+        @user = User.new(data.strip)
+      end
       @user.location = $main_hall
       $users << @user
-      send_data "You are standing in the #{@user.location}\n"
+      send_data @user.look
       return
     end
     
-    
-    
-    $connections.each do |client|
-      # Send the message from the client to all other clients
-      client.send_data "#{@user.username} says: #{data.strip} from #{@user.location}\n"
+    command = data.strip.split(" ").first
+    modifiers = data.strip.split(" ")[1..-1]
+    case data.strip.split(" ").first
+      when "say" then $connections.each {|client| client.send_data @user.say(modifiers.join(" "))}
+      when "look" then send_data @user.look
+      when "go" then 
+        send_data @user.move(modifiers.first)
+        send_data @user.look
+      when "debug"
+        
+      else send_data "huh?\n"
     end
-
   end
 end
 
