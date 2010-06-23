@@ -28,7 +28,8 @@ module EchoServer
       end
       @user.move_to($main_hall)
       $users << @user
-      return @user.look
+      @user.look
+      return @user.send_message("=> ")
     end
     
     command = data.strip.split(" ").first
@@ -43,6 +44,8 @@ module EchoServer
       when "redescribe" then @user.room_description(content.join(" ")); @user.look
       else @user.send_message("huh?\n")
     end
+    
+    return @user.send_message("=> ")
   end
 end
 

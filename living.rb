@@ -2,7 +2,9 @@ class Living
   attr_accessor :name, :class, :location
   
   def move_to(room)
+    $users.find_all{|u| u != self && u.location == @location}.each {|u| u.send_message("#{@name} left the room.\n")}
     @location = room
+    $users.find_all{|u| u != self && u.location == @location}.each {|u| u.send_message("#{@name} entered the room.\n")}
   end
   
   def move(direction)
@@ -25,10 +27,10 @@ class Living
 end
 
 class User < Living
-  attr_accessor :username, :pass_hash, :connection
+  attr_accessor :pass_hash, :connection
   
-  def initialize(username = 10.times.map{|l|('a'..'z').to_a[rand(25)]}.join)
-    @username = username
+  def initialize(name = 10.times.map{|l|('a'..'z').to_a[rand(25)]}.join)
+    @name = name
   end
   
   def send_message(message)
@@ -38,16 +40,16 @@ class User < Living
   end
   
   def say(message)
-    $users.each {|user| user.send_message("#{@username} says: #{message} from #{@location}\n")}
+    $users.each {|user| user.send_message("#{@name} says: #{message} from #{@location}\n")}
   end
   
   def tell(user, message)
-    found = $users.find{|u| u.username.downcase == user.downcase}
+    found = $users.find{|u| u.name.downcase == user.downcase}
     if found.nil?
       send_message("#{user} not found")
     else
-      found.send_message("#{@username} says: #{message}\n")
-      send_message("You said '#{message}' to #{user}\n")
+      found.send_message("#{@name} says: #{message}\n")
+      send_message("You say '#{message}' to #{user}\n")
     end
   end
   
@@ -59,7 +61,7 @@ class User < Living
     unless @connection.nil?
       @connection.close_connection
       @connection = nil
-      $users.each {|user| user.send_message("#{@username} Logged Out.\n")}
+      $users.each {|user| user.send_message("#{@name} Logged Out.\n")}
     end
   end
   
@@ -67,7 +69,7 @@ class User < Living
   def room_description; return false; end
   
   def to_s
-    @username
+    @name
   end
   
 end
@@ -89,11 +91,8 @@ class SuperUser < User
   
   def room_description(new_description)
     @location.description = new_description
-    
     send_message("Change description of current room to '#{new_description}'.\n")
-    
   end
-  
   
 end
 
