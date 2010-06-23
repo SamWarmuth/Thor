@@ -8,6 +8,7 @@ class Room
     @description = description
     @exits = {}
     set_loop_exits(exits)
+    $rooms << self
   end
   
   def set_loop_exits(exits)

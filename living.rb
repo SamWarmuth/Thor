@@ -46,7 +46,7 @@ class User < Living
   def tell(user, message)
     found = $users.find{|u| u.name.downcase == user.downcase}
     if found.nil?
-      send_message("#{user} not found")
+      send_message("#{user} not found\n")
     else
       found.send_message("#{@name} says: #{message}\n")
       send_message("You say '#{message}' to #{user}\n")
