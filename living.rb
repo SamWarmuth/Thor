@@ -1,15 +1,10 @@
-class Base
-  attr_accessor :game
-  
-end
-
-class Living < Base
+class Living
   attr_accessor :name, :class, :location
   
   def move_to(room)
-    @game.users.find_all{|u| u != self && u.location == @location}.each {|u| u.send_message("#{@name} left the room.\n")}
+    $game.users.find_all{|u| u != self && u.location == @location}.each {|u| u.send_message("#{@name} left the room.\n")}
     @location = room
-    @game.users.find_all{|u| u != self && u.location == @location}.each {|u| u.send_message("#{@name} entered the room.\n")}
+    $game.users.find_all{|u| u != self && u.location == @location}.each {|u| u.send_message("#{@name} entered the room.\n")}
   end
   
   def move(direction)
@@ -22,13 +17,16 @@ class Living < Base
     end
   end
   
-  def say
-    @game.users.each {|user| user.send_message("#{@name} says: #{message} from #{@location}\n")}
+  def say(message)
+    $game.users.find_all{|u| u.location == @location}.each{|user| user.send_message("#{@name} says: #{message}\n")}
   end
   
-  def to_s
-    @name
+  def yell(message)
+    $game.users.each {|user| user.send_message("#{@name} yells: #{message} from #{@location}\n")}
   end
+  
+  def go_home; move_to($game.home); end
+  def to_s; @name; end
 end
 
 class User < Living
@@ -44,16 +42,9 @@ class User < Living
     return true
   end
   
-  def say(message)
-    @game.users.find_all{|u| u.location == @location}.each{|user| user.send_message("#{@name} says: #{message}\n")}
-  end
-  
-  def yell(message)
-    @game.users.each {|user| user.send_message("#{@name} yells: #{message} from #{@location}\n")}
-  end
   
   def tell(user, message)
-    found = @game.users.find{|u| u.name.downcase == user.downcase}
+    found = $game.users.find{|u| u.name.downcase == user.downcase}
     if found.nil?
       send_message("#{user} not found\n")
     else
@@ -70,7 +61,7 @@ class User < Living
     unless @connection.nil?
       @connection.close_connection
       @connection = nil
-      @game.users.each {|user| user.send_message("#{@name} Logged Out.\n")}
+      $game.users.each {|user| user.send_message("#{@name} Logged Out.\n")}
     end
   end
   
@@ -85,17 +76,13 @@ class User < Living
     new_user.location = @location
     return new_user
   end
-  
-  def to_s
-    @name
-  end
 end
 
 class SuperUser < User
   def move(direction)
     if @location.exits[direction.to_sym].nil?
       send_message("Created new room.\n")
-      @location.set_loop_exits({direction.to_sym => Room.new($game)})
+      @location.set_loop_exits({direction.to_sym => Room.new})
     end
     super
   end
