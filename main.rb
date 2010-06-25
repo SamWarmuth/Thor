@@ -12,6 +12,15 @@ $game.home = Room.new("The Main Hall", "The starting point of your adventure", {
 $connections = []
 
 
+$black='\E[30;47m'
+$red='\E[31;47m'
+$green='\E[32;47m'
+$yellow='\E[33;47m'
+$blue='\E[34;47m'
+$magenta='\E[35;47m'
+$cyan='\E[36;47m'
+$white='\E[37;47m'
+
 module Server
   def user; @user; end
   def user= (user); @user = user; end
@@ -20,7 +29,7 @@ module Server
     
     timer = EventMachine::PeriodicTimer.new(120) {send_data "\033[1mIt is pitch black. You are likely to be eaten by a Grue.\033[0m\n"}
     $connections << self
-    send_data "\ncurrent users: #{$connections.find_all{|c| c.user != nil}.map{|c| c.user.name}.join(", ")}"    
+    send_data $blue + "\ncurrent users: #{$connections.find_all{|c| c.user != nil}.map{|c| c.user.name}.join(", ")}"+$blue
     send_data "\nAll users: #{$game.users.map{|u| u.to_s}.join(", ")}"
     
     send_data "\n\nWelcome.\n\nIf you're new here, type 'create <name> <password>' to create an account.\nTo log in, type 'login <name> <password>'\n\n"
