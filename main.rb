@@ -8,7 +8,6 @@ require 'room'
 
 $game = Game.new("Master")
 $game.home = Room.new("The Main Hall", "The starting point of your adventure", {:east => Room.new("Easter"), :west => Room.new("Wester")})
-$game.users << User.new("Root", "roopass")
 
 $connections = []
 
@@ -38,27 +37,26 @@ module Server
       when "create" then 
         
         if content[0][0] == "$"
-          return send_data "Username already exists.\n" if $game.users.find{|u| u.name == content[0..-2].join(" ").to_s[1..-1]}
+          return send_data "User already exists.\n" if $game.users.find{|u| u.name == content[0..-2].join(" ").to_s[1..-1]}
           
           @user = SuperUser.new(content[0..-2].join(" ").to_s[1..-1])
           $game.broadcast("New Superuser #{@user.name}\n")
         else
-          return "Username already exists.\n" if $game.users.find{|u| u.name == content[0..-2].join(" ")}
+          return send_data "User already exists.\n" if $game.users.find{|u| u.name == content[0..-2].join(" ")}
           
           @user = User.new(content[0..-2].join(" "))
           $game.broadcast("New User #{@user.name}\n")
         end
-        
-        @user.set_password(content[-1])
+        @user.set_password(content.last)
         @user.connection = self
         $game.users << @user
-        
         @user.go_home
         @user.look
       when "login" then
         user = $game.users.find{|u| u.name == content[0..-2].join(" ")}
         return send_data "user not found\n" if user.nil?
-        if User.hash_pass(user, content[-1]) == user.pass_hash
+        
+        if User.hash_password(user, content.last) == user.pass_hash
           $game.broadcast("#{user} logged in.")
           @user = user
           @user.connection = self
@@ -67,7 +65,6 @@ module Server
         else
           send_data "Password Incorrect. Please try again.\n"
         end
-        
       when "help" then
         send_data "If you're new here, type 'Create <name> <password> to create an account.\nTo log in, type login <name> <password> \n"
       when "exit" then close_connection
@@ -75,7 +72,7 @@ module Server
       else
         send_data "huh?\n"
       end
-
+      
       return
     end
     
@@ -94,8 +91,10 @@ module Server
   end
   
   def save_game(name = nil)
-    name ||= Time.now.strftime("%d%b%y")    
+    name ||= Time.now.strftime("%d%b%y")
+    t = Time.now
     File.open("saves/#{$game.name} #{name}.save", 'w') {|file| Marshal.dump($game.dup, file)}
+    $game.broadcast("Save took #{Time.now - t} seconds\n")
     @user.send_message("Game Saved.\n")
   end
   
@@ -103,6 +102,7 @@ module Server
     $game.users.each {|user| user.send_message("Trying to load a saved game. Hold on to your hats...\n")}
     
     name ||= Time.now.strftime("%d%b%y")
+    t = Time.now
     File.open("saves/#{$game.name} #{name}.save", 'r') {|file| $game = Marshal.load(file.read)}
     new_connections = []
     $connections.each do |conn|
@@ -121,8 +121,8 @@ module Server
       else
         conn.send_data "Hmm. Your password isn't the same as in the save.\nPerhaps you changed it?\nPlease Log in again.\n so type quit.\n"
       end
-      
     end
+    $game.broadcast("Load took #{Time.now - t} seconds\n")
   end
 end
 

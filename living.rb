@@ -43,18 +43,17 @@ end
 class User < Living
   attr_accessor :pass_hash, :salt, :connection
   
-  def self.hash_pass(user, password)
+  def self.hash_password(user, password)
     user.salt ||= 64.times.map{|l|('a'..'z').to_a[rand(25)]}.join
     return (Digest::SHA2.new(512) << (user.salt + password + "ewcetidbuvst")).to_s
   end
   
-  def initialize(name = 10.times.map{|l|('a'..'z').to_a[rand(25)]}.join, password = false)
+  def initialize(name = 10.times.map{|l|('a'..'z').to_a[rand(25)]}.join)
     @name = name
-    @pass_hash = hash_pass(password) if password
   end
   
   def set_password(password)
-    @pass_hash = self.hash_pass(password)
+    @pass_hash = User.hash_password(self, password)
   end
   
   def method_missing(sym, *args, &block)
