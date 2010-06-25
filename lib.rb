@@ -9,6 +9,10 @@ class Game
     @objects = []
   end
   
+  def broadcast(message)
+    @users.each {|user| user.send_message(message)}
+  end
+  
   def dup
     new_game = Game.new(@name)
     new_game.rooms = @rooms
