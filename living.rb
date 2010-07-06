@@ -83,6 +83,10 @@ class User < Living
     send_message("You're standing in #{@location.name}\n You see:\n  #{@location.contents.join("\n  ")}\n There are exits #{@location.exits.keys.join(", ")}\n")
   end
   
+  def help
+    send_message("When I was younger, so much younger than today,\nI never needed anybody's help in any way.\nBut now these days are gone, I'm not so self assured,\nNow I find I've changed my mind and opened up the doors.\n")
+  end
+  
   def quit; logout; end
   def exit; logout; end
   def logout
@@ -102,7 +106,7 @@ class User < Living
     new_user.pass_hash = @pass_hash
     new_user.class = @class
     new_user.location = @location
-    new_user.sal = @salt
+    new_user.salt = @salt
     return new_user
   end
 end
